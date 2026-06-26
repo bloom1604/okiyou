@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワンチャン起きる - 確実切り替え版</title>
+    <title>ワンチャン起きる - 完全統合版</title>
     <style>
         :root {
             --bg-color: #f3f4f6;
-            --class-color: #ff5a5f;
-            --private-color: #f472b6;
             --text-main: #1f2937;
+            --card-bg: #ffffff;
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
             background-color: var(--bg-color);
             margin: 0;
             padding: 20px;
@@ -26,7 +25,7 @@
         /* スマホ外枠 */
         .phone-container {
             width: 375px;
-            height: 750px;
+            height: 760px;
             background-color: #fafafa;
             border-radius: 40px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
@@ -44,7 +43,7 @@
             padding: 25px 20px 15px;
             text-align: center;
         }
-        .header h1 { margin: 0; font-size: 22px; }
+        .header h1 { margin: 0; font-size: 22px; font-weight: bold; }
 
         /* モード切り替えタブ */
         .tab-bar {
@@ -65,31 +64,27 @@
             color: #6b7280;
             cursor: pointer;
             border-radius: 10px;
+            transition: all 0.2s;
         }
 
-        /* アクティブなタブのスタイル */
         .tab-btn.active {
             background-color: white;
             color: var(--text-main);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* メインコンテンツ表示エリア */
+        /* メインエリア */
         .content {
             padding: 0 20px 20px;
             flex: 1;
             overflow-y: auto;
         }
 
-        /* ⚠️ モードごとの画面（初期状態はプライベートを非表示に） */
-        .mode-page {
-            display: block;
-        }
-        #page-private {
-            display: none; /* 最初は隠す */
-        }
+        /* モード別の画面（初期状態：プライベートは非表示） */
+        .mode-page { display: block; }
+        #page-private { display: none; }
 
-        /* 各種カード・バナー */
+        /* カード・バナー共通 */
         .card {
             background: white;
             border-radius: 16px;
@@ -98,17 +93,11 @@
             margin-bottom: 15px;
         }
 
-        .banner {
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 15px;
-            font-size: 13px;
-            font-weight: bold;
-        }
+        .banner { border-radius: 12px; padding: 12px; margin-bottom: 15px; font-size: 13px; font-weight: bold; }
         .banner.class { background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
         .banner.private { background-color: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
 
-        /* 時間割入力 */
+        /* 時間割テーブル */
         .timetable-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -117,19 +106,30 @@
             font-size: 11px;
             text-align: center;
         }
-        .timetable-head { font-weight: bold; background: #e5e7eb; padding: 5px; border-radius: 4px; }
-        .timetable-input { width: 100%; border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 0; text-align: center; font-size: 11px; box-sizing: border-box; }
+        .timetable-head { font-weight: bold; background: #e5e7eb; padding: 5px; border-radius: 4px; color: #4b5563; }
+        .timetable-input { width: 100%; border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 0; text-align: center; font-size: 11px; box-sizing: border-box; background: #f9fafb; }
 
-        /* イベント名入力 */
-        .input-group {
-            display: flex;
-            gap: 5px;
-            margin-top: 8px;
-        }
+        /* イベント名変更フォーム */
+        .input-group { display: flex; gap: 5px; margin-top: 8px; }
         .text-input { flex: 1; padding: 6px; border: 1px solid #bfdbfe; border-radius: 6px; font-size: 12px; }
         .action-btn { background-color: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
 
-        /* 起きたボタン */
+        /* 💝 ガチ褒めペナルティカード */
+        .penalty-card {
+            background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+            border: 1px solid #fbcfe8;
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #9d174d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .penalty-icon { font-size: 22px; }
+
+        /*ので大きなボタン */
         .wake-button {
             width: 120px;
             height: 120px;
@@ -144,6 +144,7 @@
             margin: 10px auto 20px;
             cursor: pointer;
             box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            transition: all 0.2s;
         }
         .wake-button.class-btn { background: radial-gradient(circle, #ff7e40, #ff5a5f); }
         .wake-button.private-btn { background: radial-gradient(circle, #f472b6, #ec4899); }
@@ -160,6 +161,18 @@
         .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: bold; }
         .status-badge.sleep { background-color: #fee2e2; color: #ef4444; }
         .status-badge.awake { background-color: #d1fae5; color: #10b981; }
+
+        .call-btn {
+            background-color: #ff5a5f;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .call-btn.praise-style { background-color: #f472b6; }
 
         /* トースト通知 */
         .toast {
@@ -183,45 +196,43 @@
 
     <div class="phone-container">
         <div class="header">
-            <h1 id="app-title">ワンチャン起きる</h1>
+            <h1>ワンチャン起きる</h1>
         </div>
 
         <div class="tab-bar">
-            <button class="tab-btn active" id="btn-tab-class" onclick="showPage('class')">🎓 授業モード</button>
-            <button class="tab-btn" id="btn-tab-private" onclick="showPage('private')">🍺 プライベート</button>
+            <button class="tab-btn active" id="btn-tab-class" onclick="switchPage('class')">🎓 授業モード</button>
+            <button class="tab-btn" id="btn-tab-private" onclick="switchPage('private')">🍺 プライベート</button>
         </div>
 
         <div class="content">
             
             <div id="page-class" class="mode-page">
                 <div class="banner class">
-                    <div>🎓 マイ時間割（入力して保存）</div>
+                    <div>🎓 マイ時間割（編集して保存可能）</div>
                     <div class="timetable-grid">
                         <div class="timetable-head">曜</div><div class="timetable-head">1限</div><div class="timetable-head">2限</div><div class="timetable-head">3限</div>
                         <div>月</div>
-                        <div><input type="text" class="timetable-input" value="経済学"></div>
-                        <div><input type="text" class="timetable-input" value="英語I"></div>
-                        <div><input type="text" class="timetable-input" value=""></div>
+                        <div><input type="text" class="timetable-input" value="経済学" onchange="saveTimetable()"></div>
+                        <div><input type="text" class="timetable-input" value="英語I" onchange="saveTimetable()"></div>
+                        <div><input type="text" class="timetable-input" value="" onchange="saveTimetable()"></div>
                         <div>火</div>
-                        <div><input type="text" class="timetable-input" value="ゼミ"></div>
-                        <div><input type="text" class="timetable-input" value=""></div>
-                        <div><input type="text" class="timetable-input" value="プログ"></div>
+                        <div><input type="text" class="timetable-input" value="ゼミ" onchange="saveTimetable()"></div>
+                        <div><input type="text" class="timetable-input" value="" onchange="saveTimetable()"></div>
+                        <div><input type="text" class="timetable-input" value="プログ" onchange="saveTimetable()"></div>
+                    </div>
+                </div>
+
+                <div class="penalty-card">
+                    <div class="penalty-icon">💝</div>
+                    <div>
+                        <strong>遅刻ペナルティ：お詫びのガチ褒め刑</strong><br>
+                        1限をトばした人は、全員のいいところを100文字で褒める文章を提出。
                     </div>
                 </div>
 
                 <div class="card" style="text-align: center;">
                     <div style="font-size:13px; color:#6b7280;">授業への出席できそう率</div>
-                    <div style="font-size:24px; font-weight:bold; color:#ff5a5f; margin-top:5px;">25%</div>
+                    <div style="font-size:24px; font-weight:bold; color:#ff5a5f; margin-top:5px;" id="survival-class">25%</div>
                 </div>
 
-                <button class="wake-button class-btn" id="wake-btn-class" onclick="clickWakeUp('class')">起きた！</button>
-
-                <div class="card">
-                    <div style="font-size:13px; font-weight:bold; margin-bottom:10px;">グループの様子</div>
-                    <div class="member-item"><span>👦 たかし (あなた)</span><span class="status-badge sleep" id="my-status-class">遅刻危機</span></div>
-                    <div class="member-item"><span>🐱 ひな</span><span class="status-badge awake">安全</span></div>
-                    <div class="member-item"><span>🦁 たくみ</span><span class="status-badge sleep">遅刻危機</span></div>
-                </div>
-            </div>
-
-            <div id="page-private" class="mode-page
+                <button class="wake-button class-btn" id="wake-btn-
