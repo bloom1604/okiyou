@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワンチャン起きる - 動作確約版</title>
+    <title>ワンチャン起きる - フル時間割版</title>
     <style>
         :root {
             --bg-color: #f3f4f6;
             --text-main: #1f2937;
-            --card-bg: #ffffff;
             --primary-color: #ff5a5f;
+            --private-color: #f472b6;
         }
 
         body {
@@ -25,7 +25,7 @@
 
         .phone-container {
             width: 375px;
-            height: 760px;
+            height: 780px;
             background-color: #fafafa;
             border-radius: 40px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
@@ -44,7 +44,10 @@
         }
         .header h1 { margin: 0; font-size: 22px; font-weight: bold; }
 
-        /* タブバー */
+        /* ─────────────── 💡 JS不要で切り替えるための魔法のCSS ─────────────── */
+        /* ラジオボタン自体は隠す */
+        .tab-switch { display: none; }
+
         .tab-bar {
             display: flex;
             background-color: rgba(0, 0, 0, 0.06);
@@ -53,10 +56,10 @@
             border-radius: 12px;
         }
 
-        .tab-btn {
+        /* タブのボタン（見た目） */
+        .tab-label {
             flex: 1;
-            background: none;
-            border: none;
+            text-align: center;
             padding: 10px;
             font-size: 13px;
             font-weight: bold;
@@ -66,169 +69,9 @@
             transition: all 0.2s;
         }
 
-        .tab-btn.active {
-            background-color: white;
-            color: var(--text-main);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+        /* 初期状態では両方の画面を隠す */
+        .mode-page { display: none; padding: 0 20px 20px; flex: 1; overflow-y: auto; }
 
-        .content {
-            padding: 0 20px 20px;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        /* 🔴 表示・非表示の超シンプルな制御 */
-        .mode-page { display: none; } /* 初期状態は全部非表示 */
-        .mode-page.active-page { display: block; } /* active-page がついた方だけ出す */
-
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 15px;
-        }
-
-        .banner { border-radius: 12px; padding: 12px; margin-bottom: 15px; font-size: 13px; font-weight: bold; }
-        .banner.class { background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
-        .banner.private { background-color: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
-
-        .timetable-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 5px;
-            margin-top: 8px;
-            font-size: 11px;
-            text-align: center;
-        }
-        .timetable-head { font-weight: bold; background: #e5e7eb; padding: 5px; border-radius: 4px; }
-        .timetable-input { width: 100%; border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 0; text-align: center; font-size: 11px; box-sizing: border-box; }
-
-        .input-group { display: flex; gap: 5px; margin-top: 8px; }
-        .text-input { flex: 1; padding: 6px; border: 1px solid #bfdbfe; border-radius: 6px; font-size: 12px; }
-        .action-btn { background-color: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
-
-        .penalty-card {
-            background: linear-gradient(135deg, #fdf2f8, #fce7f3);
-            border: 1px solid #fbcfe8;
-            border-radius: 12px;
-            padding: 10px 12px;
-            margin-bottom: 15px;
-            font-size: 12px;
-            color: #9d174d;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .penalty-icon { font-size: 22px; }
-
-        .wake-button {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            color: white;
-            border: none;
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 10px auto 20px;
-            cursor: pointer;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-        }
-        .wake-button.class-btn { background: radial-gradient(circle, #ff7e40, #ff5a5f); }
-        .wake-button.private-btn { background: radial-gradient(circle, #f472b6, #ec4899); }
-        .wake-button.success { background: radial-gradient(circle, #34d399, #10b981) !important; }
-
-        .member-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: bold; }
-        .status-badge.sleep { background-color: #fee2e2; color: #ef4444; }
-        .status-badge.awake { background-color: #d1fae5; color: #10b981; }
-
-        .call-btn {
-            background-color: #ff5a5f;
-            color: white;
-            border: none;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .call-btn.praise-style { background-color: #f472b6; }
-
-        .toast {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background-color: #333;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 13px;
-            transition: transform 0.3s ease;
-            z-index: 10;
-            white-space: nowrap;
-        }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-    </style>
-</head>
-<body>
-
-    <div class="phone-container">
-        <div class="header">
-            <h1>ワンチャン起きる</h1>
-        </div>
-
-        <div class="tab-bar">
-            <button class="tab-btn active" id="btn-tab-class">🎓 授業モード</button>
-            <button class="tab-btn" id="btn-tab-private">🍺 プライベート</button>
-        </div>
-
-        <div class="content">
-            
-            <div id="page-class" class="mode-page active-page">
-                <div class="banner class">
-                    <div>🎓 マイ時間割（編集して保存可能）</div>
-                    <div class="timetable-grid">
-                        <div class="timetable-head">曜</div><div class="timetable-head">1限</div><div class="timetable-head">2限</div><div class="timetable-head">3限</div>
-                        <div>月</div>
-                        <div><input type="text" class="timetable-input class-input-trigger" value="経済学"></div>
-                        <div><input type="text" class="timetable-input class-input-trigger" value="英語I"></div>
-                        <div><input type="text" class="timetable-input class-input-trigger" value=""></div>
-                        <div>火</div>
-                        <div><input type="text" class="timetable-input class-input-trigger" value="ゼミ"></div>
-                        <div><input type="text" class="timetable-input class-input-trigger" value=""></div>
-                        <div><input type="text" class="timetable-input class-input-trigger" value="プログ"></div>
-                    </div>
-                </div>
-
-                <div class="penalty-card">
-                    <div class="penalty-icon">💝</div>
-                    <div>
-                        <strong>遅刻ペナルティ：お詫びのガチ褒め刑</strong><br>
-                        1限をトばした人は、全員のいいところを100文字で褒める文章を提出。
-                    </div>
-                </div>
-
-                <div class="card" style="text-align: center;">
-                    <div style="font-size:13px; color:#6b7280;">授業への出席できそう率</div>
-                    <div style="font-size:24px; font-weight:bold; color:#ff5a5f; margin-top:5px;" id="survival-class">25%</div>
-                </div>
-
-                <button class="wake-button class-btn" id="wake-btn-class">起きた！</button>
-
-                <div class="card">
-                    <div style="font-size:13px; font-weight:bold; margin-bottom:10px;">グループの様子</div>
-                    <div class="member-item"><span>👦 たかし (あなた)</span><span class="status-badge sleep" id="status-me-class">遅刻危機</span></div>
-                    <div class="member-item"><span>🐱 ひな</span><span class="status-badge awake">安全</span></div>
-                    <div class="member-item"><span>🦁 たくみ</span><span class="status-badge sleep">遅刻危機</span> <button class="call-btn" id="call-takumi">起こす</button
+        /* 🎓 授業タブが選ばれた時：授業タブを白くし、授業画面を出す */
+        #tab-class-input:checked ~ .tab-bar #label-class {
+            background-color:
